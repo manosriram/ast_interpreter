@@ -27,6 +27,11 @@ class Token:
 class AST(object):
     pass
 
+class UnaryOP(AST):
+    def __init__(self, op, expr):
+        self.token = self.op = op
+        self.expr = expr
+
 class BinOP(AST):
     def __init__(self, left, right, op):
         self.left = left
@@ -133,6 +138,14 @@ class Parser:
 
     def factor(self):
         token = self.current_token
+        if token.type == TokenType.PLUS_OPERATOR:
+            t = self.current_token
+            self.eat(TokenType.PLUS_OPERATOR)
+            return UnaryOP(t, self.factor())
+        if token.type == TokenType.MINUS_OPERATOR:
+            t = self.current_token
+            self.eat(TokenType.MINUS_OPERATOR)
+            return UnaryOP(t, self.factor())
         if token.type == TokenType.INTEGER:
             self.eat(TokenType.INTEGER)
             return Num(token)
@@ -191,6 +204,12 @@ class Interpreter(NodeVisitor):
 
     def parse(self):
         return self.parser.expr()
+
+    def visit_UnaryOP(self, node):
+        if node.op.type == TokenType.PLUS_OPERATOR:
+            return +self.visit(node.expr)
+        if node.op.type == TokenType.MINUS_OPERATOR:
+            return -self.visit(node.expr)
 
     def visit_BinOP(self, node):
         if node.op.type == TokenType.PLUS_OPERATOR:
