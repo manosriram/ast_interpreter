@@ -9,6 +9,13 @@ class TokenType(Enum):
     DIVIDE_OPERATOR = 6
     LPAREN = 7
     RPAREN = 8
+    
+    SEMI = 9
+    BEGIN = 10
+    END = 11
+    DOT = 12
+    ASSIGN = 13
+    ID = 14
 
 HIGH_PRECEDENCE_OPERATORS = [TokenType.MULTIPLY_OPERATOR, TokenType.DIVIDE_OPERATOR]
 LOW_PRECEDENCE_OPERATORS = [TokenType.PLUS_OPERATOR, TokenType.MINUS_OPERATOR]
@@ -24,8 +31,31 @@ class Token:
     def __repr(self):
         return f"{self.type}: {self.value}"
 
+RESERVED_KEYWORDS = {
+    "BEGIN": Token(TokenType.BEGIN, "BEGIN"),
+    "END": Token(TokenType.END, "END"),
+}
+
 class AST(object):
     pass
+
+class NoOp(AST):
+    pass
+
+class Var(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = self.token.value
+
+class Compound(AST):
+    def __init__(self):
+        self.children = []
+
+class AssignOP(AST):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.right = self.right
+        self.token = self.op = op
 
 class UnaryOP(AST):
     def __init__(self, op, expr):
@@ -67,6 +97,15 @@ class Parser:
         self.current_character = self.text[0]
         self.current_token = None
 
+    def _id(self):
+        result = ""
+        while self.current_character is not None and self.current_character.isalnum():
+            result += self.current_character
+            self.advance()
+
+        token = RESERVED_KEYWORDS.get(result, Token(TokenType.ID, result))
+        return token
+
     def advance(self):
         self.pos += 1
         if self.pos < len(self.text):
@@ -81,6 +120,12 @@ class Parser:
             self.advance()
 
         return int(value)
+
+    def peek(self):
+        if self.pos + 1 >= len(self.text):
+            return None
+
+        return self.text[self.pos + 1]
 
     def get_next_token(self):
         text = self.text
@@ -124,6 +169,25 @@ class Parser:
 
         if self.current_character == ')':
             token = Token(TokenType.RPAREN, text[self.pos])
+            self.advance()
+            return token
+
+        if self.current_character.isalpha():
+            return self._id()
+
+        if self.current_character == ';':
+            token = Token(TokenType.SEMI, text[self.pos])
+            self.advance()
+            return token
+
+        if self.current_character == '.':
+            token = Token(TokenType.DOT, text[self.pos])
+            self.advance()
+            return token
+
+        if self.current_character == ':' and self.peek() == '=':
+            token = Token(TokenType.ASSIGN, ":=")
+            self.advance()
             self.advance()
             return token
         
