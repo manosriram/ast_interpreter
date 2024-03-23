@@ -1,4 +1,4 @@
-from ops import BinOP, UnaryOP, NoOP, Assign, Var, Num, String, Compound
+from ops import BinOP, Equals, UnaryOP, NoOP, Assign, Var, Num, String, Compound
 from enums import TokenType
 
 class Token:
@@ -13,7 +13,7 @@ class Token:
         return f"{self.type}: {self.value}"
 
 HIGH_PRECEDENCE_OPERATORS = [TokenType.MULTIPLY_OPERATOR, TokenType.DIVIDE_OPERATOR]
-LOW_PRECEDENCE_OPERATORS = [TokenType.PLUS_OPERATOR, TokenType.MINUS_OPERATOR]
+LOW_PRECEDENCE_OPERATORS = [TokenType.PLUS_OPERATOR, TokenType.MINUS_OPERATOR, TokenType.EQUALS]
 
 class Parser:
     def __init__(self, lexer):
@@ -60,6 +60,17 @@ class Parser:
         self.eat(TokenType.ASSIGN)
         right = self.expr()
         return Assign(left=left, right=right, op=token)
+
+    """
+        equality_statement:
+            expr EQUALS expr SEMI
+    """
+    def equality_statement(self):
+        left = self.expr()
+        token = self.current_token
+        self.eat(TokenType.EQUALS)
+        right = self.expr()
+        return Equals(left=left, right=right, op=token)
 
     """
         statement:
@@ -110,6 +121,10 @@ class Parser:
             t = self.current_token
             self.eat(TokenType.MINUS_OPERATOR)
             return UnaryOP(t, self.factor())
+        elif token.type == TokenType.EQUALS:
+            t = self.current_token
+            self.eat(TokenType.EQUALS)
+            return UnaryOP(t, self.factor())
         elif token.type == TokenType.INTEGER:
             self.eat(TokenType.INTEGER)
             return Num(token)
@@ -154,6 +169,8 @@ class Parser:
                 self.eat(TokenType.PLUS_OPERATOR)
             elif operator.value == '-':
                 self.eat(TokenType.MINUS_OPERATOR)
+            elif operator.value == '=':
+                self.eat(TokenType.EQUALS)
 
             node = BinOP(left=node, op=operator, right=self.term())
 

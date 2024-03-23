@@ -21,6 +21,8 @@ class Interpreter(NodeVisitor):
             return +self.visit(node.expr)
         if node.op.type == TokenType.MINUS_OPERATOR:
             return -self.visit(node.expr)
+        if node.op.type == TokenType.EQUALS:
+            return self.visit(node.expr)
 
     def visit_BinOP(self, node):
         if node.op.type == TokenType.PLUS_OPERATOR:
@@ -31,11 +33,18 @@ class Interpreter(NodeVisitor):
             return self.visit(node.left) * self.visit(node.right)
         if node.op.type == TokenType.DIVIDE_OPERATOR:
             return self.visit(node.left) / self.visit(node.right)
+        if node.op.type == TokenType.EQUALS:
+            left = self.visit(node.left)
+            right = self.visit(node.right)
+            return left == right
 
     def visit_Num(self, node):
         return node.value
 
     def visit_String(self, node):
+        return node.value
+
+    def visit_Equals(self, node):
         return node.value
 
     def visit_Compound(self, node):

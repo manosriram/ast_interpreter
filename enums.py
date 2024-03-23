@@ -20,3 +20,4 @@ class TokenType(Enum):
     ELSE = 16
     THEN = 17
     STRING = 18
+    EQUALS = 19

@@ -142,6 +142,12 @@ class Lexer:
                 self.advance()
                 self.advance()
                 return token
+
+            if self.current_character == '=' and self.peek() == '=':
+                token = Token(TokenType.EQUALS, "==")
+                self.advance()
+                self.advance()
+                return token
             
             self.error()
 
