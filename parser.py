@@ -16,6 +16,9 @@ class TokenType(Enum):
     DOT = 12
     ASSIGN = 13
     ID = 14
+    IF = 15
+    ELSE = 16
+    THEN = 17
 
 HIGH_PRECEDENCE_OPERATORS = [TokenType.MULTIPLY_OPERATOR, TokenType.DIVIDE_OPERATOR]
 LOW_PRECEDENCE_OPERATORS = [TokenType.PLUS_OPERATOR, TokenType.MINUS_OPERATOR]
@@ -34,12 +37,15 @@ class Token:
 RESERVED_KEYWORDS = {
     "BEGIN": Token(TokenType.BEGIN, "BEGIN"),
     "END": Token(TokenType.END, "END"),
+    #  "IF": Token(TokenType.IF, "IF"),
+    #  "ELSE": Token(TokenType.ELSE, "ELSE"),
+    #  "THEN": Token(TokenType.THEN, "THEN"),
 }
 
 class AST(object):
     pass
 
-class NoOp(AST):
+class NoOP(AST):
     pass
 
 class Var(AST):
@@ -51,10 +57,10 @@ class Compound(AST):
     def __init__(self):
         self.children = []
 
-class AssignOP(AST):
+class Assign(AST):
     def __init__(self, left, op, right):
         self.left = left
-        self.right = self.right
+        self.right = right
         self.token = self.op = op
 
 class UnaryOP(AST):
@@ -96,14 +102,35 @@ class Parser:
         self.pos = 0
         self.current_character = self.text[0]
         self.current_token = None
+        #  self.character_vs_token = {
+            #  '+': Token(TokenType.PLUS_OPERATOR, '+'),
+            #  '-': Token(TokenType.MINUS_OPERATOR, '-'),
+            #  '*': Token(TokenType.MULTIPLY_OPERATOR, '*'),
+            #  '/': Token(TokenType.DIVIDE_OPERATOR, '/'),
+            #  '(': Token(TokenType.LPAREN, '('),
+            #  ')': Token(TokenType.RPAREN, ')'),
+            #  ';': Token(TokenType.SEMI, ';'),
+            #  '.': Token(TokenType.DOT, '.'),
 
+        #  }
+        self.current_token = self.get_next_token()
+
+    def error(self):
+        raise Exception('Invalid syntax')
+    """
+        Marks the token as identifier (variable name)
+    """
     def _id(self):
         result = ""
-        while self.current_character is not None and self.current_character.isalnum():
+        while self.current_character is not None and (self.current_character.isalnum() or self.current_character == '_'):
             result += self.current_character
             self.advance()
 
         token = RESERVED_KEYWORDS.get(result, Token(TokenType.ID, result))
+        #  if token == TokenType.IF:
+            #  pass
+        #  if token == TokenType.ELSE:
+            #  pass
         return token
 
     def advance(self):
@@ -130,67 +157,75 @@ class Parser:
     def get_next_token(self):
         text = self.text
 
-        if self.pos >= len(text):
-            return Token(TokenType.EOF, "")
+        while self.current_character is not None:
+            if self.pos >= len(text):
+                return Token(TokenType.EOF, "")
 
-        if self.current_character == ' ':
-            self.advance()
-            return self.get_next_token()
+            if self.current_character == ' ' or self.current_character == '\n':
+                self.advance()
+                continue
+                #  return self.get_next_token()
 
-        token = None
-        if self.current_character.isdigit():
-            token = Token(TokenType.INTEGER, self.integer())
-            return token
+            token = None
+            if self.current_character.isdigit():
+                token = Token(TokenType.INTEGER, self.integer())
+                return token
 
-        if self.current_character == '+':
-            token = Token(TokenType.PLUS_OPERATOR, text[self.pos])
-            self.advance()
-            return token
+            if self.current_character == '+':
+                token = Token(TokenType.PLUS_OPERATOR, text[self.pos])
+                self.advance()
+                return token
 
-        if self.current_character == '-':
-            token = Token(TokenType.MINUS_OPERATOR, text[self.pos])
-            self.advance()
-            return token
+            if self.current_character == '-':
+                token = Token(TokenType.MINUS_OPERATOR, text[self.pos])
+                self.advance()
+                return token
 
-        if self.current_character == '*':
-            token = Token(TokenType.MULTIPLY_OPERATOR, text[self.pos])
-            self.advance()
-            return token
+            if self.current_character == '*':
+                token = Token(TokenType.MULTIPLY_OPERATOR, text[self.pos])
+                self.advance()
+                return token
 
-        if self.current_character == '/':
-            token = Token(TokenType.DIVIDE_OPERATOR, text[self.pos])
-            self.advance()
-            return token
+            if self.current_character == '/':
+                token = Token(TokenType.DIVIDE_OPERATOR, text[self.pos])
+                self.advance()
+                return token
 
-        if self.current_character == '(':
-            token = Token(TokenType.LPAREN, text[self.pos])
-            self.advance()
-            return token
+            if self.current_character == '(':
+                token = Token(TokenType.LPAREN, text[self.pos])
+                self.advance()
+                return token
 
-        if self.current_character == ')':
-            token = Token(TokenType.RPAREN, text[self.pos])
-            self.advance()
-            return token
+            if self.current_character == ')':
+                token = Token(TokenType.RPAREN, text[self.pos])
+                self.advance()
+                return token
 
-        if self.current_character.isalpha():
-            return self._id()
+            if self.current_character == ';':
+                token = Token(TokenType.SEMI, text[self.pos])
+                self.advance()
+                return token
 
-        if self.current_character == ';':
-            token = Token(TokenType.SEMI, text[self.pos])
-            self.advance()
-            return token
+            if self.current_character == '.':
+                token = Token(TokenType.DOT, text[self.pos])
+                self.advance()
+                return token
+            #  if self.current_character in self.character_vs_token:
+                #  token = self.character_vs_token[self.current_character]
+                #  self.advance()
+                #  return token
 
-        if self.current_character == '.':
-            token = Token(TokenType.DOT, text[self.pos])
-            self.advance()
-            return token
+            if self.current_character.isalpha() or self.current_character == '_':
+                return self._id()
 
-        if self.current_character == ':' and self.peek() == '=':
-            token = Token(TokenType.ASSIGN, ":=")
-            self.advance()
-            self.advance()
-            return token
-        
+            if self.current_character == ':' and self.peek() == '=':
+                token = Token(TokenType.ASSIGN, ":=")
+                self.advance()
+                self.advance()
+                return token
+            
+            self.error()
+
         return Token(TokenType.EOF, None)
 
     def eat(self, token_type):
@@ -200,17 +235,66 @@ class Parser:
         else:
             return None
 
+    def compound_statement(self):
+        self.eat(TokenType.BEGIN)
+        node = self.statement_list()
+        self.eat(TokenType.END)
+
+        c = Compound()
+        for n in node:
+            c.children.append(n)
+
+        return c
+
+    def assignment_statement(self):
+        left = self.variable()
+        token = self.current_token
+        self.eat(TokenType.ASSIGN)
+        right = self.expr()
+        return Assign(left=left, right=right, op=token)
+
+    def statement(self):
+        if self.current_token.type == TokenType.BEGIN:
+            return self.compound_statement()
+        elif self.current_token.type == TokenType.ID:
+            return self.assignment_statement()
+        else:
+            return self.empty()
+
+    def statement_list(self):
+        node = self.statement()
+        results = [node]
+
+        while self.current_token.type == TokenType.SEMI:
+            self.eat(TokenType.SEMI)
+            results.append(self.statement())
+
+        if self.current_token.type == TokenType.ID:
+            return None
+
+        return results
+
+    def empty(self):
+        return NoOP()
+
+    def variable(self):
+        v = Var(self.current_token)
+        self.eat(TokenType.ID)
+        return v
+
     def factor(self):
         token = self.current_token
-        if token.type == TokenType.PLUS_OPERATOR:
+        if token is None:
+            return
+        elif token.type == TokenType.PLUS_OPERATOR:
             t = self.current_token
             self.eat(TokenType.PLUS_OPERATOR)
             return UnaryOP(t, self.factor())
-        if token.type == TokenType.MINUS_OPERATOR:
+        elif token.type == TokenType.MINUS_OPERATOR:
             t = self.current_token
             self.eat(TokenType.MINUS_OPERATOR)
             return UnaryOP(t, self.factor())
-        if token.type == TokenType.INTEGER:
+        elif token.type == TokenType.INTEGER:
             self.eat(TokenType.INTEGER)
             return Num(token)
         elif token.type == TokenType.LPAREN:
@@ -218,11 +302,31 @@ class Parser:
             node = self.expr()
             self.eat(TokenType.RPAREN)
             return node
+        else:
+            return self.variable()
+
+        #  if token.type == TokenType.IF:
+            #  self.eat(TokenType.IF)
+            #  node = self.expr()
+            #  if node == True:
+                #  self.eat(TokenType.THEN)
+                #  # handle if statement
+            #  else:
+                #  # check for an else statement
+                #  if self.current_token == TokenType.ELSE:
+                    #  # handle else statement
+                    #  pass
+
 
     def term(self):
         node = self.factor()
+        if node is None:
+            return
+
         while self.current_token.type in HIGH_PRECEDENCE_OPERATORS:
             operator = self.current_token
+            if operator is None:
+                break
             if operator.value == '*':
                 self.eat(TokenType.MULTIPLY_OPERATOR)
                 #  result *= self.factor()
@@ -253,6 +357,19 @@ class Parser:
 
         return node
 
+    def program(self):
+        node = self.compound_statement()
+        self.eat(TokenType.DOT)
+        return node
+
+    def parse(self):
+        result = self.program()
+        if self.current_token.type != TokenType.EOF:
+            print("syntax error")
+            return None
+
+        return result
+
 class NodeVisitor:
     def visit(self, node):
         method_name = 'visit_' + type(node).__name__
@@ -263,11 +380,10 @@ class NodeVisitor:
         raise Exception('No visit_{} method'.format(type(node).__name__))
 
 class Interpreter(NodeVisitor):
+    GLOBAL_SCOPE = {}
+
     def __init__(self, parser):
         self.parser = parser
-
-    def parse(self):
-        return self.parser.expr()
 
     def visit_UnaryOP(self, node):
         if node.op.type == TokenType.PLUS_OPERATOR:
@@ -283,15 +399,49 @@ class Interpreter(NodeVisitor):
         if node.op.type == TokenType.MULTIPLY_OPERATOR:
             return self.visit(node.left) * self.visit(node.right)
         if node.op.type == TokenType.DIVIDE_OPERATOR:
-            return self.visit(node.left) * self.visit(node.right)
+            return self.visit(node.left) / self.visit(node.right)
 
     def visit_Num(self, node):
         return node.value
 
-if __name__ == "__main__":
-    while True:
-        inp = str(input("calc>"))
-        p = Parser(inp)
-        i = Interpreter(p)
-        result = i.visit(i.parse())
-        print(result)
+    def visit_Compound(self, node):
+        for child in node.children:
+            self.visit(child)
+
+    def visit_NoOP(self, node):
+        pass
+
+    def visit_Assign(self, node):
+        v = node.left.value
+        self.GLOBAL_SCOPE[v] = self.visit(node.right)
+
+    def visit_Var(self, node):
+        name = node.value
+        if self.GLOBAL_SCOPE.get(name, None):
+            return self.GLOBAL_SCOPE[name]
+        else:
+            raise Exception(f"Variable {name} not found in scope")
+
+    def interpret(self):
+        tree = self.parser.parse()
+        if tree is None:
+            return ''
+        
+        ok = self.visit(tree)
+        return ok
+
+source = """
+ BEGIN
+     BEGIN
+         number := 2;
+         a := number + 1;
+         b := 10 * a + 10 * number / 4;
+         c := a - - b
+     END;
+     x := 11;
+ END.
+"""
+p = Parser(source)
+i = Interpreter(p)
+x = i.interpret()
+print(i.GLOBAL_SCOPE)
