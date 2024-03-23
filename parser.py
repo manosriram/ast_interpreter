@@ -1,27 +1,5 @@
-from enum import Enum
-
-class TokenType(Enum):
-    INTEGER = 1
-    PLUS_OPERATOR = 2
-    EOF = 3
-    MINUS_OPERATOR = 4
-    MULTIPLY_OPERATOR = 5
-    DIVIDE_OPERATOR = 6
-    LPAREN = 7
-    RPAREN = 8
-    
-    SEMI = 9
-    BEGIN = 10
-    END = 11
-    DOT = 12
-    ASSIGN = 13
-    ID = 14
-    IF = 15
-    ELSE = 16
-    THEN = 17
-
-HIGH_PRECEDENCE_OPERATORS = [TokenType.MULTIPLY_OPERATOR, TokenType.DIVIDE_OPERATOR]
-LOW_PRECEDENCE_OPERATORS = [TokenType.PLUS_OPERATOR, TokenType.MINUS_OPERATOR]
+from ops import BinOP, UnaryOP, NoOP, Assign, Var, Num, Compound
+from enums import TokenType
 
 class Token:
     def __init__(self, type, value):
@@ -31,67 +9,11 @@ class Token:
     def __str__(self):
         return f"{self.type}: {self.value}"
     
-    def __repr(self):
+    def __repr__(self):
         return f"{self.type}: {self.value}"
 
-RESERVED_KEYWORDS = {
-    "BEGIN": Token(TokenType.BEGIN, "BEGIN"),
-    "END": Token(TokenType.END, "END"),
-}
-
-class AST(object):
-    pass
-
-class NoOP(AST):
-    pass
-
-class Var(AST):
-    def __init__(self, token):
-        self.token = token
-        self.value = self.token.value
-
-class Compound(AST):
-    def __init__(self):
-        self.children = []
-
-class Assign(AST):
-    def __init__(self, left, op, right):
-        self.left = left
-        self.right = right
-        self.token = self.op = op
-
-class UnaryOP(AST):
-    def __init__(self, op, expr):
-        self.token = self.op = op
-        self.expr = expr
-
-class BinOP(AST):
-    def __init__(self, left, right, op):
-        self.left = left
-        self.right = right
-        self.token = self.op = op
-
-    def p(self):
-        if type(self) == BinOP:
-            #  print(self.token)
-            if type(self.left) == BinOP:
-                self.left.p()
-                print(self.left.token)
-            else:
-                print(self.left.type, self.left.value)
-            if type(self.right) == BinOP:
-                self.right.p()
-                print(self.left.token)
-            else:
-                print(self.right.type, self.right.value)
-        else:
-            print(self.value)
-            return
-
-class Num(AST):
-    def __init__(self, token):
-        self.token = token
-        self.value = self.token.value
+HIGH_PRECEDENCE_OPERATORS = [TokenType.MULTIPLY_OPERATOR, TokenType.DIVIDE_OPERATOR]
+LOW_PRECEDENCE_OPERATORS = [TokenType.PLUS_OPERATOR, TokenType.MINUS_OPERATOR]
 
 class Parser:
     def __init__(self, text):
@@ -100,10 +22,15 @@ class Parser:
         self.current_character = self.text[0]
         self.current_token = None
 
+        self.RESERVED_KEYWORDS = {
+            "BEGIN": Token(TokenType.BEGIN, "BEGIN"),
+            "END": Token(TokenType.END, "END"),
+        }
         self.current_token = self.get_next_token()
 
     def error(self):
         raise Exception('Invalid syntax')
+
     """
         Marks the token as identifier (variable name)
     """
@@ -113,9 +40,12 @@ class Parser:
             result += self.current_character
             self.advance()
 
-        token = RESERVED_KEYWORDS.get(result, Token(TokenType.ID, result))
+        token = self.RESERVED_KEYWORDS.get(result, Token(TokenType.ID, result))
         return token
 
+    """
+        Moves the pos marker to next position (pos+1) if possible
+    """
     def advance(self):
         self.pos += 1
         if self.pos < len(self.text):
@@ -123,6 +53,9 @@ class Parser:
         else:
             self.current_character = None
     
+    """
+        Gets continuous integer string values and returns it as an single integer
+    """
     def integer(self):
         value = ""
         while self.pos < len(self.text) and self.text[self.pos].isdigit():
@@ -131,12 +64,18 @@ class Parser:
 
         return int(value)
 
+    """
+        Returns the character in next position if possible
+    """
     def peek(self):
         if self.pos + 1 >= len(self.text):
             return None
 
         return self.text[self.pos + 1]
 
+    """
+        Parses the word and returns it as one of the allowed tokens
+    """
     def get_next_token(self):
         text = self.text
 
@@ -147,7 +86,6 @@ class Parser:
             if self.current_character == ' ' or self.current_character == '\n':
                 self.advance()
                 continue
-                #  return self.get_next_token()
 
             token = None
             if self.current_character.isdigit():
@@ -207,6 +145,9 @@ class Parser:
 
         return Token(TokenType.EOF, None)
 
+    """
+        Gets and returns next token if given token_type is current_token type
+    """
     def eat(self, token_type):
         if self.current_token.type == token_type:
             self.current_token = self.get_next_token()
@@ -214,6 +155,10 @@ class Parser:
         else:
             return None
 
+    """
+        compound_statement:
+            BEGIN statement_list END
+    """
     def compound_statement(self):
         self.eat(TokenType.BEGIN)
         node = self.statement_list()
@@ -225,6 +170,10 @@ class Parser:
 
         return c
 
+    """
+        assignment_statement:
+            ID ASSIGN expr SEMI
+    """
     def assignment_statement(self):
         left = self.variable()
         token = self.current_token
@@ -232,6 +181,10 @@ class Parser:
         right = self.expr()
         return Assign(left=left, right=right, op=token)
 
+    """
+        statement:
+            compound_statement | assignment_statement | empty
+    """
     def statement(self):
         if self.current_token.type == TokenType.BEGIN:
             return self.compound_statement()
@@ -240,6 +193,10 @@ class Parser:
         else:
             return self.empty()
 
+    """
+        statement_list:
+            statement | statement SEMI statement_list
+    """
     def statement_list(self):
         node = self.statement()
         results = [node]
@@ -331,79 +288,3 @@ class Parser:
             return None
 
         return result
-
-class NodeVisitor:
-    def visit(self, node):
-        method_name = 'visit_' + type(node).__name__
-        visitor = getattr(self, method_name, self.generic_visit)
-        return visitor(node)
-
-    def generic_visit(self, node):
-        raise Exception('No visit_{} method'.format(type(node).__name__))
-
-class Interpreter(NodeVisitor):
-    GLOBAL_SCOPE = {}
-
-    def __init__(self, parser):
-        self.parser = parser
-
-    def visit_UnaryOP(self, node):
-        if node.op.type == TokenType.PLUS_OPERATOR:
-            return +self.visit(node.expr)
-        if node.op.type == TokenType.MINUS_OPERATOR:
-            return -self.visit(node.expr)
-
-    def visit_BinOP(self, node):
-        if node.op.type == TokenType.PLUS_OPERATOR:
-            return self.visit(node.left) + self.visit(node.right)
-        if node.op.type == TokenType.MINUS_OPERATOR:
-            return self.visit(node.left) - self.visit(node.right)
-        if node.op.type == TokenType.MULTIPLY_OPERATOR:
-            return self.visit(node.left) * self.visit(node.right)
-        if node.op.type == TokenType.DIVIDE_OPERATOR:
-            return self.visit(node.left) / self.visit(node.right)
-
-    def visit_Num(self, node):
-        return node.value
-
-    def visit_Compound(self, node):
-        for child in node.children:
-            self.visit(child)
-
-    def visit_NoOP(self, node):
-        pass
-
-    def visit_Assign(self, node):
-        v = node.left.value
-        self.GLOBAL_SCOPE[v] = self.visit(node.right)
-
-    def visit_Var(self, node):
-        name = node.value
-        if self.GLOBAL_SCOPE.get(name, None):
-            return self.GLOBAL_SCOPE[name]
-        else:
-            raise Exception(f"Variable {name} not found in scope")
-
-    def interpret(self):
-        tree = self.parser.parse()
-        if tree is None:
-            return ''
-        
-        ok = self.visit(tree)
-        return ok
-
-source = """
- BEGIN
-     BEGIN
-         number := 2;
-         a := number + 1;
-         b := 10 * a + 10 * number / 4;
-         c := a - - b
-     END;
-     x := 11;
- END.
-"""
-p = Parser(source)
-i = Interpreter(p)
-x = i.interpret()
-print(i.GLOBAL_SCOPE)
