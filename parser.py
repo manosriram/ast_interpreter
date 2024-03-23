@@ -37,9 +37,6 @@ class Token:
 RESERVED_KEYWORDS = {
     "BEGIN": Token(TokenType.BEGIN, "BEGIN"),
     "END": Token(TokenType.END, "END"),
-    #  "IF": Token(TokenType.IF, "IF"),
-    #  "ELSE": Token(TokenType.ELSE, "ELSE"),
-    #  "THEN": Token(TokenType.THEN, "THEN"),
 }
 
 class AST(object):
@@ -102,17 +99,7 @@ class Parser:
         self.pos = 0
         self.current_character = self.text[0]
         self.current_token = None
-        #  self.character_vs_token = {
-            #  '+': Token(TokenType.PLUS_OPERATOR, '+'),
-            #  '-': Token(TokenType.MINUS_OPERATOR, '-'),
-            #  '*': Token(TokenType.MULTIPLY_OPERATOR, '*'),
-            #  '/': Token(TokenType.DIVIDE_OPERATOR, '/'),
-            #  '(': Token(TokenType.LPAREN, '('),
-            #  ')': Token(TokenType.RPAREN, ')'),
-            #  ';': Token(TokenType.SEMI, ';'),
-            #  '.': Token(TokenType.DOT, '.'),
 
-        #  }
         self.current_token = self.get_next_token()
 
     def error(self):
@@ -127,10 +114,6 @@ class Parser:
             self.advance()
 
         token = RESERVED_KEYWORDS.get(result, Token(TokenType.ID, result))
-        #  if token == TokenType.IF:
-            #  pass
-        #  if token == TokenType.ELSE:
-            #  pass
         return token
 
     def advance(self):
@@ -210,10 +193,6 @@ class Parser:
                 token = Token(TokenType.DOT, text[self.pos])
                 self.advance()
                 return token
-            #  if self.current_character in self.character_vs_token:
-                #  token = self.character_vs_token[self.current_character]
-                #  self.advance()
-                #  return token
 
             if self.current_character.isalpha() or self.current_character == '_':
                 return self._id()
@@ -305,19 +284,6 @@ class Parser:
         else:
             return self.variable()
 
-        #  if token.type == TokenType.IF:
-            #  self.eat(TokenType.IF)
-            #  node = self.expr()
-            #  if node == True:
-                #  self.eat(TokenType.THEN)
-                #  # handle if statement
-            #  else:
-                #  # check for an else statement
-                #  if self.current_token == TokenType.ELSE:
-                    #  # handle else statement
-                    #  pass
-
-
     def term(self):
         node = self.factor()
         if node is None:
@@ -329,10 +295,8 @@ class Parser:
                 break
             if operator.value == '*':
                 self.eat(TokenType.MULTIPLY_OPERATOR)
-                #  result *= self.factor()
             elif operator.value == '/':
                 self.eat(TokenType.DIVIDE_OPERATOR)
-                #  result /= self.factor()
 
             node = BinOP(left=node, op=operator, right=self.factor())
 
@@ -348,10 +312,8 @@ class Parser:
             operator = self.current_token
             if operator.value == '+':
                 self.eat(TokenType.PLUS_OPERATOR)
-                #  result += self.term()
             elif operator.value == '-':
                 self.eat(TokenType.MINUS_OPERATOR)
-                #  result -= self.term()
 
             node = BinOP(left=node, op=operator, right=self.term())
 
