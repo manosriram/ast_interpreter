@@ -1,3 +1,4 @@
+from lexer import Lexer
 from parser import Parser
 from interpreter import Interpreter
 
@@ -14,7 +15,8 @@ source = """
 """
 
 if __name__ == "__main__":
-    p = Parser(source)
+    l = Lexer(source)
+    p = Parser(l)
     i = Interpreter(p)
     x = i.interpret()
     print(i.GLOBAL_SCOPE)
