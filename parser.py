@@ -1,4 +1,4 @@
-from ops import BinOP, UnaryOP, NoOP, Assign, Var, Num, Compound
+from ops import BinOP, UnaryOP, NoOP, Assign, Var, Num, String, Compound
 from enums import TokenType
 
 class Token:
@@ -113,6 +113,9 @@ class Parser:
         elif token.type == TokenType.INTEGER:
             self.eat(TokenType.INTEGER)
             return Num(token)
+        elif token.type == TokenType.STRING:
+            self.eat(TokenType.STRING)
+            return String(token)
         elif token.type == TokenType.LPAREN:
             self.eat(TokenType.LPAREN)
             node = self.expr()

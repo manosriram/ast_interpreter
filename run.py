@@ -6,6 +6,7 @@ source = """
  BEGIN
      BEGIN
          number := 2;
+         name := 'manosriram';
          a := number + 1;
          b := 10 * a + 10 * number / 4;
          c := a - - b

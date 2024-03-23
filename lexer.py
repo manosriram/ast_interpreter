@@ -49,6 +49,18 @@ class Lexer:
             self.advance()
 
         return int(value)
+    
+    def string(self):
+        value = ""
+        self.advance()
+        while self.pos < len(self.text):
+            value += self.text[self.pos]
+            self.advance()
+            if self.text[self.pos] == "'":
+                self.advance()
+                break
+
+        return value
 
     """
         Returns the character in next position if possible
@@ -116,6 +128,10 @@ class Lexer:
             if self.current_character == '.':
                 token = Token(TokenType.DOT, text[self.pos])
                 self.advance()
+                return token
+            
+            if self.current_character == "'":
+                token = Token(TokenType.STRING, self.string())
                 return token
 
             if self.current_character.isalpha() or self.current_character == '_':

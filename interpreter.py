@@ -35,6 +35,9 @@ class Interpreter(NodeVisitor):
     def visit_Num(self, node):
         return node.value
 
+    def visit_String(self, node):
+        return node.value
+
     def visit_Compound(self, node):
         for child in node.children:
             self.visit(child)

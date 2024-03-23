@@ -51,3 +51,8 @@ class Num(AST):
     def __init__(self, token):
         self.token = token
         self.value = self.token.value
+
+class String(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = self.token.value
