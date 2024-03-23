@@ -1,4 +1,4 @@
-from ops import BinOP, Equals, UnaryOP, NoOP, Assign, Var, Num, String, Compound
+from ops import BinOP, UnaryOP, NoOP, Assign, Var, Num, String, Compound
 from enums import TokenType
 
 class Token:
@@ -60,17 +60,6 @@ class Parser:
         self.eat(TokenType.ASSIGN)
         right = self.expr()
         return Assign(left=left, right=right, op=token)
-
-    """
-        equality_statement:
-            expr EQUALS expr SEMI
-    """
-    def equality_statement(self):
-        left = self.expr()
-        token = self.current_token
-        self.eat(TokenType.EQUALS)
-        right = self.expr()
-        return Equals(left=left, right=right, op=token)
 
     """
         statement:

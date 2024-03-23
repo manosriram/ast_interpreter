@@ -14,13 +14,13 @@ assignment_statement:
 		ID ASSIGN expr
 
 factor:
-		PLUS factor | MINUS factor | INTEGER | LPAREN expr RPAREN | variable
+		PLUS factor | MINUS factor | EQUALS factor | INTEGER | LPAREN expr RPAREN | variable
 
 term:
 		factor ((MULTIPLY|DIVIDE) factor)*
 
 expr:
-		term ((PLUS|MINUS) term)*
+		term ((PLUS|MINUS|EQUALS) term)*
 
 variable:
 		ID
