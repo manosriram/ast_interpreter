@@ -14,7 +14,7 @@ assignment_statement:
 		ID ASSIGN expr
 
 factor:
-		PLUS factor | MINUS factor | EQUALS factor | NOT_EQUALS factor INTEGER | LPAREN expr RPAREN | variable
+		PLUS factor | MINUS factor | EQUALS factor | NOT_EQUALS factor | INTEGER | LPAREN expr RPAREN | variable
 
 term:
 		factor ((MULTIPLY|DIVIDE) factor)*
