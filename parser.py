@@ -13,16 +13,12 @@ class Token:
         return f"{self.type}: {self.value}"
 
 HIGH_PRECEDENCE_OPERATORS = [TokenType.MULTIPLY_OPERATOR, TokenType.DIVIDE_OPERATOR]
-LOW_PRECEDENCE_OPERATORS = [TokenType.PLUS_OPERATOR, TokenType.MINUS_OPERATOR, TokenType.EQUALS]
+LOW_PRECEDENCE_OPERATORS = [TokenType.PLUS_OPERATOR, TokenType.MINUS_OPERATOR, TokenType.EQUALS, TokenType.NOT_EQUALS]
 
 class Parser:
     def __init__(self, lexer):
         self.lexer = lexer
         self.current_token = None
-        self.RESERVED_KEYWORDS = {
-            "BEGIN": Token(TokenType.BEGIN, "BEGIN"),
-            "END": Token(TokenType.END, "END"),
-        }
         self.current_token = self.lexer.current_token
 
     """
@@ -114,6 +110,10 @@ class Parser:
             t = self.current_token
             self.eat(TokenType.EQUALS)
             return UnaryOP(t, self.factor())
+        elif token.type == TokenType.NOT_EQUALS:
+            t = self.current_token
+            self.eat(TokenType.NOT_EQUALS)
+            return UnaryOP(t, self.factor())
         elif token.type == TokenType.INTEGER:
             self.eat(TokenType.INTEGER)
             return Num(token)
@@ -160,6 +160,8 @@ class Parser:
                 self.eat(TokenType.MINUS_OPERATOR)
             elif operator.value == '=':
                 self.eat(TokenType.EQUALS)
+            elif operator.value == '!':
+                self.eat(TokenType.NOT_EQUALS)
 
             node = BinOP(left=node, op=operator, right=self.term())
 

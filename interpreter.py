@@ -21,7 +21,7 @@ class Interpreter(NodeVisitor):
             return +self.visit(node.expr)
         if node.op.type == TokenType.MINUS_OPERATOR:
             return -self.visit(node.expr)
-        if node.op.type == TokenType.EQUALS:
+        if node.op.type in [TokenType.EQUALS, TokenType.NOT_EQUALS]:
             return self.visit(node.expr)
 
     def visit_BinOP(self, node):
@@ -37,6 +37,10 @@ class Interpreter(NodeVisitor):
             left = self.visit(node.left)
             right = self.visit(node.right)
             return left == right
+        if node.op.type == TokenType.NOT_EQUALS:
+            left = self.visit(node.left)
+            right = self.visit(node.right)
+            return left != right
 
     def visit_Num(self, node):
         return node.value
@@ -59,7 +63,7 @@ class Interpreter(NodeVisitor):
         self.GLOBAL_SCOPE[v] = self.visit(node.right)
 
     def visit_Var(self, node):
-        name = node.value
+        name = node.value.lower()
         if self.GLOBAL_SCOPE.get(name, None):
             return self.GLOBAL_SCOPE[name]
         else:

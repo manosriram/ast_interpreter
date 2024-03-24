@@ -21,3 +21,4 @@ class TokenType(Enum):
     THEN = 17
     STRING = 18
     EQUALS = 19
+    NOT_EQUALS = 20

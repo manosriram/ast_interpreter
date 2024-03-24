@@ -9,8 +9,8 @@ class Lexer:
         self.current_token = None
 
         self.RESERVED_KEYWORDS = {
-            "BEGIN": Token(TokenType.BEGIN, "BEGIN"),
-            "END": Token(TokenType.END, "END"),
+            "begin": Token(TokenType.BEGIN, "BEGIN"),
+            "end": Token(TokenType.END, "END"),
         }
         self.current_token = self.get_next_token()
 
@@ -26,7 +26,7 @@ class Lexer:
             result += self.current_character
             self.advance()
 
-        token = self.RESERVED_KEYWORDS.get(result, Token(TokenType.ID, result))
+        token = self.RESERVED_KEYWORDS.get(result.lower(), Token(TokenType.ID, result))
         return token
 
     """
@@ -145,6 +145,12 @@ class Lexer:
 
             if self.current_character == '=' and self.peek() == '=':
                 token = Token(TokenType.EQUALS, "==")
+                self.advance()
+                self.advance()
+                return token
+
+            if self.current_character == '!' and self.peek() == '=':
+                token = Token(TokenType.NOT_EQUALS, "!=")
                 self.advance()
                 self.advance()
                 return token
