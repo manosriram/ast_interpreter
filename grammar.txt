@@ -1,5 +1,17 @@
 program:
-		BEGIN compound_statement END.
+		PROGRAM ID SEMI block DOT
+
+block:
+		declarations compound_statement
+
+declarations:
+		VAR (variable_declarations SEMI)+ | empty
+
+variable_declarations:
+		ID (COMMA ID)+ COLON type_spec
+
+type_spec:
+		INTEGER | REAL
 
 compound_statement:
 		BEGIN statement_list END
@@ -14,10 +26,10 @@ assignment_statement:
 		ID ASSIGN expr
 
 factor:
-		PLUS factor | MINUS factor | EQUALS factor | NOT_EQUALS factor | INTEGER | LPAREN expr RPAREN | variable
+		PLUS factor | MINUS factor | EQUALS factor | NOT_EQUALS factor | INTEGER | REAL | LPAREN expr RPAREN | variable
 
 term:
-		factor ((MULTIPLY|DIVIDE) factor)*
+		factor ((MULTIPLY|DIVIDE|DIV) factor)*
 
 expr:
 		term ((PLUS|MINUS|EQUALS|NOT_EQUALS) term)*

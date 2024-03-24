@@ -1,4 +1,4 @@
-from ops import BinOP, UnaryOP, NoOP, Assign, Var, Num, String, Compound
+from ops import BinOP, Block, Program, UnaryOP, NoOP, Assign, Var, Num, String, Compound, VarDecl
 from enums import TokenType
 
 class Token:
@@ -12,7 +12,7 @@ class Token:
     def __repr__(self):
         return f"{self.type}: {self.value}"
 
-HIGH_PRECEDENCE_OPERATORS = [TokenType.MULTIPLY_OPERATOR, TokenType.DIVIDE_OPERATOR]
+HIGH_PRECEDENCE_OPERATORS = [TokenType.MULTIPLY_OPERATOR, TokenType.INTEGER_DIVIDE_OPERATOR, TokenType.FLOAT_DIVIDE_OPERATOR]
 LOW_PRECEDENCE_OPERATORS = [TokenType.PLUS_OPERATOR, TokenType.MINUS_OPERATOR, TokenType.EQUALS, TokenType.NOT_EQUALS]
 
 class Parser:
@@ -56,6 +56,7 @@ class Parser:
         self.eat(TokenType.ASSIGN)
         right = self.expr()
         return Assign(left=left, right=right, op=token)
+
 
     """
         statement:
@@ -117,6 +118,9 @@ class Parser:
         elif token.type == TokenType.INTEGER:
             self.eat(TokenType.INTEGER)
             return Num(token)
+        elif token.type == TokenType.REAL:
+            self.eat(TokenType.REAL)
+            return Num(token)
         elif token.type == TokenType.STRING:
             self.eat(TokenType.STRING)
             return String(token)
@@ -137,10 +141,12 @@ class Parser:
             operator = self.current_token
             if operator is None:
                 break
-            if operator.value == '*':
+            if operator.type == TokenType.MULTIPLY_OPERATOR:
                 self.eat(TokenType.MULTIPLY_OPERATOR)
-            elif operator.value == '/':
-                self.eat(TokenType.DIVIDE_OPERATOR)
+            elif operator.type == TokenType.INTEGER_DIVIDE_OPERATOR:
+                self.eat(TokenType.INTEGER_DIVIDE_OPERATOR)
+            elif operator.type == TokenType.FLOAT_DIVIDE_OPERATOR:
+                self.eat(TokenType.FLOAT_DIVIDE_OPERATOR)
 
             node = BinOP(left=node, op=operator, right=self.factor())
 
@@ -167,9 +173,59 @@ class Parser:
 
         return node
 
+    def type_spec(self):
+        t = self.current_token.type
+        if t == TokenType.INTEGER:
+            self.eat(TokenType.INTEGER)
+            return Token(TokenType.INTEGER, "INTEGER")
+        elif t == TokenType.REAL:
+            self.eat(TokenType.REAL)
+            return Token(TokenType.REAL, "REAL")
+
+        return None
+
+    def variable_declarations(self):
+        raw_var_nodes = [Var(self.current_token)]
+        self.eat(TokenType.ID)
+        
+        while self.current_token.type == TokenType.COMMA:
+            self.eat(TokenType.COMMA)
+            raw_var_nodes.append(Var(self.current_token))
+            self.eat(TokenType.ID)
+
+        self.eat(TokenType.COLON)
+        t = self.type_spec()
+        return [VarDecl(x, t) for x in raw_var_nodes]
+
+    def declarations(self):
+        d = []
+        if self.current_token.type == TokenType.VAR:
+            self.eat(TokenType.VAR)
+            while self.current_token.type == TokenType.ID:
+                v = self.variable_declarations()
+                d.extend(v)
+                self.eat(TokenType.SEMI)
+
+        return d
+
+    def block(self):
+        declarations = self.declarations()
+        compound_statement = self.compound_statement()
+
+        return Block(declarations, compound_statement)
+
     def program(self):
-        node = self.compound_statement()
+        self.eat(TokenType.PROGRAM)
+        v = self.variable()
+        self.eat(TokenType.SEMI)
+        block = self.block()
         self.eat(TokenType.DOT)
+
+        program = Program(name=v.value, block=block)
+        return program
+
+        #  node = self.compound_statement()
+        #  self.eat(TokenType.DOT)
         return node
 
     def parse(self):

@@ -31,8 +31,6 @@ class Interpreter(NodeVisitor):
             return self.visit(node.left) - self.visit(node.right)
         if node.op.type == TokenType.MULTIPLY_OPERATOR:
             return self.visit(node.left) * self.visit(node.right)
-        if node.op.type == TokenType.DIVIDE_OPERATOR:
-            return self.visit(node.left) / self.visit(node.right)
         if node.op.type == TokenType.EQUALS:
             left = self.visit(node.left)
             right = self.visit(node.right)
@@ -41,6 +39,10 @@ class Interpreter(NodeVisitor):
             left = self.visit(node.left)
             right = self.visit(node.right)
             return left != right
+        if node.op.type == TokenType.INTEGER_DIVIDE_OPERATOR:
+            return self.visit(node.left) // self.visit(node.right)
+        if node.op.type == TokenType.FLOAT_DIVIDE_OPERATOR:
+            return float(self.visit(node.left)) / float(self.visit(node.right))
 
     def visit_Num(self, node):
         return node.value
@@ -68,6 +70,21 @@ class Interpreter(NodeVisitor):
             return self.GLOBAL_SCOPE[name]
         else:
             raise Exception(f"Variable {name} not found in scope")
+
+    def visit_Program(self, node):
+        self.visit(node.block)
+    
+    def visit_Block(self, node):
+        for d in node.declarations:
+            self.visit(d)
+
+        self.visit(node.compound_statement)
+
+    def visit_VarDecl(self, node):
+        pass
+
+    def visit_Type(self, node):
+        pass
 
     def interpret(self):
         tree = self.parser.parse()

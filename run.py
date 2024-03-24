@@ -3,18 +3,31 @@ from parser import Parser
 from interpreter import Interpreter
 
 source = """
- begin
+ PROGRAM test;
+ VAR
+    a : INTEGER;
+    b, c : REAL;
+
+ BEGIN
      BEGIN
          number := 2;
-         name := 'manosriram';
-         a := NUMBER + 1;
-         b := 10 * a + 10 * number / 4;
-         z := (1+2-2) == (10-9);
-         y := 'mano' != 'mano';
-         c := a - - b
-     END;
-     x := 11;
- end.
+         a := 100;
+         b := 2.22;
+         c := 1.12;
+         name := 'mano';
+         num_plus_one := NUMBER + 1;
+         calculation := 10 * a + 10 * number DIV 4;
+         number_equals := number == 3;
+         number_not_equals := number != 3;
+         nested_operations := a - - number;
+         real_div := b / c;
+         int_div := b DIV c;
+         { this is a comment }
+         {
+            this is a comment block
+         }
+     END
+ END.
 """
 
 if __name__ == "__main__":
@@ -24,5 +37,5 @@ if __name__ == "__main__":
     x = i.interpret()
     print(i.GLOBAL_SCOPE)
     """
-        {'number': 2, 'name': 'manosriram', 'a': 3, 'b': 35.0, 'z': True, 'y': False, 'c': 38.0, 'x': 11}
+        {'number': 2, 'a': 100, 'b': 2.22, 'c': 1.12, 'name': 'mano', 'num_plus_one': 3, 'calculation': 1005, 'number_equals': False, 'number_not_equals': True, 'nested_operations': 102, 'real_div': 1.9821428571428572, 'int_div': 1.0}
     """

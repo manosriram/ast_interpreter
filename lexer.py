@@ -11,6 +11,11 @@ class Lexer:
         self.RESERVED_KEYWORDS = {
             "begin": Token(TokenType.BEGIN, "BEGIN"),
             "end": Token(TokenType.END, "END"),
+            "var": Token(TokenType.VAR, "VAR"),
+            "program": Token(TokenType.PROGRAM, "PROGRAM"),
+            "integer": Token(TokenType.INTEGER, "INTEGER"),
+            "real": Token(TokenType.REAL, "REAL"),
+            "div": Token(TokenType.INTEGER_DIVIDE_OPERATOR, "INTEGER_DIV"),
         }
         self.current_token = self.get_next_token()
 
@@ -48,7 +53,16 @@ class Lexer:
             value += self.text[self.pos]
             self.advance()
 
-        return int(value)
+        if self.pos < len(self.text) and self.text[self.pos] == '.':
+            value += "."
+            self.advance()
+            while self.pos < len(self.text) and self.text[self.pos].isdigit():
+                value += self.text[self.pos]
+                self.advance()
+
+            return float(value)
+        else:
+            return int(value)
     
     def string(self):
         value = ""
@@ -71,6 +85,11 @@ class Lexer:
 
         return self.text[self.pos + 1]
 
+    def skip_comment(self):
+        while self.current_character != '}':
+            self.advance()
+        self.advance()
+
     """
         Parses the word and returns it as one of the allowed tokens
     """
@@ -85,9 +104,18 @@ class Lexer:
                 self.advance()
                 continue
 
+            if self.current_character == '{':
+                self.skip_comment()
+                continue
+
             token = None
             if self.current_character.isdigit():
-                token = Token(TokenType.INTEGER, self.integer())
+                i = self.integer()
+                if type(i) == int:
+                    token = Token(TokenType.INTEGER, i)
+                if type(i) == float:
+                    token = Token(TokenType.REAL, i)
+
                 return token
 
             if self.current_character == '+':
@@ -102,11 +130,6 @@ class Lexer:
 
             if self.current_character == '*':
                 token = Token(TokenType.MULTIPLY_OPERATOR, text[self.pos])
-                self.advance()
-                return token
-
-            if self.current_character == '/':
-                token = Token(TokenType.DIVIDE_OPERATOR, text[self.pos])
                 self.advance()
                 return token
 
@@ -129,19 +152,34 @@ class Lexer:
                 token = Token(TokenType.DOT, text[self.pos])
                 self.advance()
                 return token
+
+            if self.current_character == ',':
+                token = Token(TokenType.COMMA, text[self.pos])
+                self.advance()
+                return token
             
             if self.current_character == "'":
                 token = Token(TokenType.STRING, self.string())
                 return token
 
-            if self.current_character.isalpha() or self.current_character == '_':
-                return self._id()
+            if self.current_character == "/":
+                token = Token(TokenType.FLOAT_DIVIDE_OPERATOR, text[self.pos])
+                self.advance()
+                return token
 
             if self.current_character == ':' and self.peek() == '=':
                 token = Token(TokenType.ASSIGN, ":=")
                 self.advance()
                 self.advance()
                 return token
+
+            if self.current_character == ":":
+                token = Token(TokenType.COLON, text[self.pos])
+                self.advance()
+                return token
+
+            if self.current_character.isalpha() or self.current_character == '_':
+                return self._id()
 
             if self.current_character == '=' and self.peek() == '=':
                 token = Token(TokenType.EQUALS, "==")
