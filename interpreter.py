@@ -1,4 +1,5 @@
 from enums import TokenType
+from symbol import SymbolTable, VarSymbol
 
 class NodeVisitor:
     def visit(self, node):
@@ -9,6 +10,71 @@ class NodeVisitor:
     def generic_visit(self, node):
         raise Exception('No visit_{} method'.format(type(node).__name__))
 
+class SymbolTableBuilder(NodeVisitor):
+    def __init__(self) -> None:
+        self.symbol_table = SymbolTable()
+
+    def visit_UnaryOP(self, node):
+        self.visit(node.expr)
+
+    def visit_BinOP(self, node):
+        self.visit(node.left)
+        self.visit(node.right)
+
+    def visit_Num(self, node):
+        pass
+
+    def visit_String(self, node):
+        pass
+
+    def visit_Equals(self, node):
+        pass
+
+    def visit_Compound(self, node):
+        for child in node.children:
+            self.visit(child)
+
+    def visit_NoOP(self, node):
+        pass
+
+    def visit_Assign(self, node):
+        pass
+
+    def visit_Var(self, node):
+        pass
+
+    def visit_Program(self, node):
+        self.visit(node.block)
+    
+    def visit_Block(self, node):
+        for d in node.declarations:
+            self.visit(d)
+
+        self.visit(node.compound_statement)
+
+    def visit_VarDecl(self, node):
+        typename = node.type_node.value
+        varname = node.var_node.value
+        typesymbol = self.symbol_table.lookup(typename)
+        varsymbol = VarSymbol(varname, typesymbol)
+        self.symbol_table.define(varsymbol)
+
+    def visit_Assign(self, node):
+        varname = node.left.value
+        varsymbol = self.symbol_table.lookup(varname)
+        if not varsymbol:
+            raise Exception(f"Variable '{varname}' not found")
+
+        self.visit(node.right)
+
+    def visit_Var(self, node):
+        varname = node.value
+        varsymbol = self.symbol_table.lookup(varname)
+        if not varsymbol:
+            raise Exception(f"Variable '{varname}' not found")
+
+    def visit_Type(self, node):
+        pass
 
 class Interpreter(NodeVisitor):
     GLOBAL_SCOPE = {}
